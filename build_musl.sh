@@ -10,9 +10,9 @@ then
     echo "\$MUSL_DIR not defined"
     exit 1
 fi
-if [ -z "${MUSL_INSTALL_PATH}" ]
+if [ -z "${MUSL_INSTALL_DIR}" ]
 then
-    echo "\$MUSL_INSTALL_PATH not defined"
+    echo "\$MUSL_INSTALL_DIR not defined"
     exit 1
 fi
 if [ -z "${MUSL_TAG}" ]
@@ -33,9 +33,9 @@ git pull --rebase
 git checkout "${MUSL_TAG}"
 git stash pop || true
 make distclean
-rm -rf install
-mkdir -p install
-./configure CFLAGS="-m32 -march=i486" LDFLAGS=-m32 --prefix="${MUSL_INSTALL_PATH}"
+rm -rf "${MUSL_INSTALL_DIR}"
+mkdir -p "${MUSL_INSTALL_DIR}"
+./configure CFLAGS="-m32 -march=i486" LDFLAGS=-m32 --prefix="$(realpath ${MUSL_INSTALL_DIR})"
 sed -i 's/x32/i386/' config.mak
 sed -i 's/-O2/-Os/' config.mak
 NPROC="$(nproc)"

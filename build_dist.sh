@@ -2,7 +2,7 @@
 
 set -ex
 export DIST_BUILD="build"
-rm -rf "${DIST_BUILD}"
+#rm -rf "${DIST_BUILD}"
 mkdir -p "${DIST_BUILD}"
 export DIST_ROOT="$(realpath "${DIST_BUILD}/root")"
 export DIST_INITRD="$(realpath "${DIST_BUILD}/initrd")"
@@ -11,9 +11,9 @@ export DIST_ISO="${DIST_BUILD}/486lin.iso"
 export DIST_SQUASHFS="${DIST_DISK}/root.sfs"
 
 DIST_DIRS="bin boot dev etc home lib mnt proc root run sbin sys tmp var etc/init.d"
-rm -rf "${DIST_ROOT}"
-rm -rf "${DIST_INITRD}"
-rm -rf "${DIST_DISK}"
+#rm -rf "${DIST_ROOT}"
+#rm -rf "${DIST_INITRD}"
+#rm -rf "${DIST_DISK}"
 mkdir -p "${DIST_ROOT}"
 mkdir -p "${DIST_INITRD}"
 mkdir -p "${DIST_DISK}"
@@ -27,25 +27,26 @@ export LINUX_URL="git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
 export LINUX_BRANCH="linux-6.1.y"
 export LINUX_DIR="linux"
 
-./build_linux.sh
+#./build_linux.sh
 
 export MUSL_URL="git://git.musl-libc.org/musl"
 export MUSL_TAG="v1.2.5"
 export MUSL_DIR="musl"
-export MUSL_INSTALL_PATH="$(realpath "${MUSL_DIR}/install")"
+export MUSL_INSTALL_DIR="install"
+
+#./build_musl.sh
+
+export MUSL_INSTALL_PATH="$(realpath ${MUSL_DIR}/${MUSL_INSTALL_DIR})"
 export MUSL_BIN="${MUSL_INSTALL_PATH}/bin"
-MUSL_LIB="${MUSL_INSTALL_PATH}/lib"
-MUSL_INC="${MUSL_INSTALL_PATH}/include"
-
-./build_musl.sh
-
 export BUSYBOX_URL="git://git.busybox.net/busybox"
 export BUSYBOX_BRANCH="1_37_stable"
 export BUSYBOX_DIR="busybox"
-export BUSYBOX_EXE="$(realpath ${BUSYBOX_DIR}/busybox)"
 
 ./build_busybox.sh
+
+export BUSYBOX_EXE="$(realpath ${BUSYBOX_DIR}/busybox)"
 ./create_initrd.sh
+
 SYSLINUX_VER="6.03"
 export SYSLINUX_URL="https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-${SYSLINUX_VER}.tar.gz"
 export SYSLINUX_DIR="syslinux"
@@ -81,6 +82,8 @@ mkisofs -o "${DIST_ISO}" \
 HARD_DISK="486_hdd.img"
 DISK_SIZE="8G"
 RAM_SIZE=32
+
+exit
 
 PLOP_VER="5.15.0"
 PLOP_DIR="plpbt-${PLOP_VER}"
