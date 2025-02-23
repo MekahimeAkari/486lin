@@ -1,0 +1,8 @@
+#!/bin/sh
+/bin/mount -a
+echo "Loading drivers..."
+for i in $(grep MODALIAS /sys/bus/*/devices/*/uevent | cut -d = -f 2 | sort | uniq)
+do
+    modprobe "$i" 2>/dev/null
+done
+echo "ok"
