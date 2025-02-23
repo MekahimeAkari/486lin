@@ -59,9 +59,11 @@ fi
 make defconfig HOSTCC="${BUSYBOX_CC_LINE}" CC="${BUSYBOX_CC_LINE}"
 sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config
 sed -i 's/# CONFIG_INSTALL_NO_USR is not set/CONFIG_INSTALL_NO_USR=y/' .config
+make oldconfig
 make install -j${NPROC} HOSTCC="${BUSYBOX_CC_LINE}" CC="${BUSYBOX_CC_LINE}" CONFIG_PREFIX="${DIST_ROOT}"
 make mrproper
 make allnoconfig HOSTCC="${BUSYBOX_CC_LINE}" CC="${BUSYBOX_CC_LINE}"
+sed -i 's/# CONFIG_LS is not set/CONFIG_LS=y/' .config
 sed -i 's/# CONFIG_LONG_OPTS is not set/CONFIG_LONG_OPTS=y/' .config
 sed -i 's/# CONFIG_LFS is not set/CONFIG_LFS=y/' .config
 sed -i 's/# CONFIG_TIME64 is not set/CONFIG_TIME64=y/' .config
@@ -161,11 +163,10 @@ sed -i 's/# CONFIG_ASH is not set/CONFIG_ASH=y/' .config
 sed -i 's/# CONFIG_ASH_OPTIMIZE_FOR_SIZE is not set/CONFIG_ASH_OPTIMIZE_FOR_SIZE=y/' .config
 sed -i 's/# CONFIG_ASH_INTERNAL_GLOB is not set/CONFIG_ASH_INTERNAL_GLOB=y/' .config
 sed -i 's/# CONFIG_ASH_BASH_COMPAT is not set/CONFIG_ASH_BASH_COMPAT=y/' .config
-sed -i 's/# CONFIG_ASH_ALIAS is not set/CONFIG_ASH_ALIAS=y/' .config
 sed -i 's/# CONFIG_ASH_ECHO is not set/CONFIG_ASH_ECHO=y/' .config
 sed -i 's/# CONFIG_ASH_PRINTF is not set/CONFIG_ASH_PRINTF=y/' .config
 sed -i 's/# CONFIG_ASH_TEST is not set/CONFIG_ASH_TEST=y/' .config
 sed -i 's/# CONFIG_ASH_CMDCMD is not set/CONFIG_ASH_CMDCMD=y/' .config
-sed -i 's/# CONFIG_CTTYHACK is not set/CONFIG_CTTYHACK=y/' .config
 sed -i 's/# CONFIG_MKDIR is not set/CONFIG_MKDIR=y/' .config
+make oldconfig
 make install -j${NPROC} HOSTCC="${BUSYBOX_CC_LINE}" CC="${BUSYBOX_CC_LINE}" CONFIG_PREFIX="${DIST_INITRD}"
