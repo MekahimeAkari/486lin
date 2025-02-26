@@ -107,7 +107,6 @@ ISO_CREATE_SCRIPT="${CREATE_DIR}/${ISO_CREATE_SCRIPT_NAME}"
 SYSLINUX_GET_SCRIPT_NAME="get_syslinux.sh"
 SYSLINUX_GET_SCRIPT="${GET_DIR}/${SYSLINUX_GET_SCRIPT_NAME}"
 
-
 CLEAN_BUILD=1
 CLEAN_REPOS=0
 BUILD_DIST=1
@@ -200,8 +199,11 @@ then
 fi
 if [ "${CLEAN_REPOS}" -eq 1 ]
 then
+    set -x
     echo "Cleaning repos..."
     rm -rf "${DIST_REPOS}"
+    rm -rf "${SYSLINUX_PATH}"
+    rm -f "${REPO_DIR}"/syslinux*
 fi
 if [ "${BUILD_DIST}" -eq 0 ]
 then
@@ -247,7 +249,7 @@ then
         MUSL_PATH="${MUSL_PATH}" \
         MUSL_INSTALL_PATH="${MUSL_INSTALL_PATH}" \
         || { echo "Building Musl failed"; exit 1; }
-fi
+fi\
 
 if [ "${BUILD_BUSYBOX}" -eq 1 ]
 then
