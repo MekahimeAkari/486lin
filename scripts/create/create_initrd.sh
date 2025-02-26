@@ -2,9 +2,10 @@
 set -e
 
 SCRIPT_DIR="$(realpath "$(dirname "$0")")"
+SCRIPTS_DIR="$(realpath "${SCRIPT_DIR}"/../)"
 COMMON_FUNCS_NAME="common_funcs.sh"
 
-. "${SCRIPT_DIR}/${COMMON_FUNCS_NAME}"
+. "${SCRIPTS_DIR}/${COMMON_FUNCS_NAME}"
 
 MODULES_DIR="lib/modules"
 
@@ -122,21 +123,23 @@ then
 fi
 
 INITRD_MODULES_PATH="${INITRD_PATH}/${MODULES_DIR}"
-set -x
 
 if [ "${CLEAN_BUILD}" -eq 1 ]
 then
+    echo "Cleaning initrd and directories..."
     rm -rf "${INITRD_MODULES_PATH}"
     rm -rf "${INITRD_OUT}"
 fi
 
 if [ "${DO_WORK}" -eq 0 ]
 then
+    echo "Done"
     exit
 fi
 
 if [ "${CREATE_INITRD}" -eq 1 ]
 then
+    echo "Creating initrd..."
     OLD_PWD="${PWD}"
     cd "${INITRD_PATH}"
     cp -a "${INITRD_SKEL_PATH}"/* "${INITRD_PATH}"
@@ -281,3 +284,4 @@ then
     cd "${OLD_PWD}"
 fi
 
+echo "Done"

@@ -3,9 +3,10 @@
 set -e
 
 SCRIPT_DIR="$(realpath "$(dirname "$0")")"
+SCRIPTS_DIR="$(realpath "${SCRIPT_DIR}"/../)"
 COMMON_FUNCS_NAME="common_funcs.sh"
 
-. "${SCRIPT_DIR}/${COMMON_FUNCS_NAME}"
+. "${SCRIPTS_DIR}/${COMMON_FUNCS_NAME}"
 
 BUSYBOX_URL="git://git.busybox.net/busybox"
 BUSYBOX_BRANCH="1_37_stable"
@@ -14,7 +15,7 @@ BUSYBOX_CONFIG_NAME=".config"
 BUSYBOX_CFLAGS="-m32 -march=i486 -Wl,-m -Wl,elf_i386 -static -static-libgcc"
 BUSYBOX_EXPECTED_CONFIGS="initrd root"
 BUSYBOX_PATCHES_DIR="patches/busybox"
-BUSYBOX_PATCHES_PATH="${SCRIPT_DIR}/${BUSYBOX_PATCHES_DIR}"
+BUSYBOX_PATCHES_PATH="${REPO_DIR}/${BUSYBOX_PATCHES_DIR}"
 BUILD_JOBS="$(nproc)"
 if [ -z "${BUILD_JOBS}" ]
 then
@@ -46,8 +47,6 @@ BUSYBOX_CONFIG=<CONFIG>: CONFIG to build Busybox, will call busybox_CONFIG_confi
 BUSYBOX_INSTALL_PATH=<PATH>: PATH to where the Busybox executable should be installed (required if not no-install)
 EOF
 }
-
-set -x
 
 BUSYBOX_CONFIG=
 PULL_REPO=1
@@ -112,7 +111,7 @@ do
             ;;
         BUSYBOX_CONFIG=*)
             BUSYBOX_CONFIG="$(get_var_val "$1")"
-            BUSYBOX_CONFIG_SCRIPT="${SCRIPT_DIR}/busybox_${BUSYBOX_CONFIG}_config.sh"
+            BUSYBOX_CONFIG_SCRIPT="${CONFIG_DIR}/config_busybox_${BUSYBOX_CONFIG}.sh"
             shift
             ;;
         LINUX_HEADERS_INSTALL_PATH=*)
@@ -198,6 +197,7 @@ BUSYBOX_CC_LINE="${BUSYBOX_CC} ${BUSYBOX_CFLAGS}"
 
 if [ "${CLEAN_REPOS}" -eq 1 ]
 then
+    echo "Cleaning Busybox repo..."
     rm -rf "${BUSYBOX_PATH}"
 fi
 
@@ -205,9 +205,11 @@ if [ "${PULL_REPO}" -eq 1 ]
 then
     if [ ! -d "${BUSYBOX_PATH}" ]
     then
+        echo "Busybox repo doesn't exist, cloning..."
         git clone "${BUSYBOX_URL}" "${BUSYBOX_PATH}"
     fi
 
+    echo "Updating Busybox repo..."
     OLD_PWD="${PWD}"
     cd "${BUSYBOX_PATH}"
     git stash
@@ -224,6 +226,7 @@ fi
 
 if [ "${CLEAN_BUILD}" -eq 1 ] && [ "${CLEAN_REPOS}" -eq 0 ]
 then
+    echo "Cleaning Busybox build..."
     OLD_PWD="${PWD}"
     cd "${BUSYBOX_PATH}"
     rm -f "${BUSYBOX_CONFIG_PATH}"
@@ -233,16 +236,20 @@ fi
 
 if [ "${DO_WORK}" -eq 0 ]
 then
+    echo "Done"
     exit
 fi
 
+
 if [ "${BUILD_BUSYBOX}" -eq 1 ]
 then
+    echo "Configuring Busybox..."
     "${BUSYBOX_CONFIG_SCRIPT}" \
         BUSYBOX_PATH="${BUSYBOX_PATH}" \
         BUSYBOX_CC_LINE="${BUSYBOX_CC_LINE}"
     OLD_PWD="${PWD}"
     cd "${BUSYBOX_PATH}"
+    echo "Building Busybox..."
     make -j"${BUILD_JOBS}" \
         HOSTCC="${BUSYBOX_CC_LINE}" \
         CC="${BUSYBOX_CC_LINE}"
@@ -251,6 +258,7 @@ fi
 
 if [ "${INSTALL_BUSYBOX}" -eq 1 ]
 then
+    echo "Installing Busybox..."
     OLD_PWD="${PWD}"
     cd "${BUSYBOX_PATH}"
     make install -j"${BUILD_JOBS}" \
@@ -259,4 +267,6 @@ then
         CONFIG_PREFIX="${BUSYBOX_INSTALL_PATH}"
     cd "${OLD_PWD}"
 fi
+
+echo "Done"
 

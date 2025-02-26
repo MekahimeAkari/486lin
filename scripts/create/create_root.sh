@@ -2,9 +2,10 @@
 set -e
 
 SCRIPT_DIR="$(realpath "$(dirname "$0")")"
+SCRIPTS_DIR="$(realpath "${SCRIPT_DIR}"/../)"
 COMMON_FUNCS_NAME="common_funcs.sh"
 
-. "${SCRIPT_DIR}/${COMMON_FUNCS_NAME}"
+. "${SCRIPTS_DIR}/${COMMON_FUNCS_NAME}"
 
 MODULES_DIR="lib/modules"
 
@@ -100,57 +101,29 @@ then
 fi
 
 ROOT_MODULES_PATH="${ROOT_PATH}/${MODULES_DIR}"
-set -x
 
 if [ "${CLEAN_BUILD}" -eq 1 ]
 then
+    echo "Cleaning root directories..."
     rm -rf "${ROOT_PATH}/*"
 fi
 
 if [ "${DO_WORK}" -eq 0 ]
 then
+    echo "Done"
     exit
 fi
 
 if [ "${CREATE_ROOT}" -eq 1 ]
 then
+    echo "Creating root directories..."
     OLD_PWD="${PWD}"
     cd "${ROOT_PATH}"
     cp -a "${ROOT_SKEL_PATH}"/* "${ROOT_PATH}"
     cp -a "${LINUX_MODULES_INSTALL_PATH}"/* "${ROOT_PATH}"
     KERNEL_VER="$(ls "${ROOT_MODULES_PATH}")"
     ROOT_MODULES_VER_PATH="${ROOT_MODULES_PATH}/${KERNEL_VER}"
-
-    for i in $(grep -v "^#" "${ROOT_MODULES_VER_PATH}/modules.alias" | cut -d ' ' -f 3- | sort | uniq)
-    do
-        if [ -n "$(find . -name "$i.ko")" ]
-        then
-            grep " $i" "${ROOT_MODULES_VER_PATH}/modules.alias" >> "${ROOT_MODULES_VER_PATH}/modules.alias.new"
-        fi
-    done
-
-    mv "${ROOT_MODULES_VER_PATH}/modules.alias.new" "${ROOT_MODULES_VER_PATH}/modules.alias"
-
-    for i in $(cat "${ROOT_MODULES_VER_PATH}/modules.dep" | cut -d ':' -f 1)
-    do
-        if [ -f "${ROOT_MODULES_VER_PATH}/$i" ]
-        then
-            grep "$i:" "${ROOT_MODULES_VER_PATH}/modules.dep" >> "${ROOT_MODULES_VER_PATH}/modules.dep.new"
-        fi
-    done
-
-    mv "${ROOT_MODULES_VER_PATH}/modules.dep.new" "${ROOT_MODULES_VER_PATH}/modules.dep"
-
-    for i in $(cat "${ROOT_MODULES_VER_PATH}/modules.order")
-    do
-        if [ -f "${ROOT_MODULES_VER_PATH}/$i" ]
-        then
-            grep "$i" "${ROOT_MODULES_VER_PATH}/modules.order" >> "${ROOT_MODULES_VER_PATH}/modules.order.new"
-        fi
-    done
-
-    mv "${ROOT_MODULES_VER_PATH}/modules.order.new" "${ROOT_MODULES_VER_PATH}/modules.order"
-
     cd "${OLD_PWD}"
 fi
 
+echo "Done"

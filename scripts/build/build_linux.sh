@@ -3,14 +3,15 @@
 set -e
 
 SCRIPT_DIR="$(realpath "$(dirname "$0")")"
+SCRIPTS_DIR="$(realpath "${SCRIPT_DIR}"/../)"
 COMMON_FUNCS_NAME="common_funcs.sh"
 
-. "${SCRIPT_DIR}/${COMMON_FUNCS_NAME}"
+. "${SCRIPTS_DIR}/${COMMON_FUNCS_NAME}"
 
 LINUX_URL="git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
 LINUX_BRANCH="linux-6.1.y"
 LINUX_CONFIG_SCRIPT_NAME="config_linux.sh"
-LINUX_CONFIG_SCRIPT="${SCRIPT_DIR}/${LINUX_CONFIG_SCRIPT_NAME}"
+LINUX_CONFIG_SCRIPT="${CONFIG_DIR}/${LINUX_CONFIG_SCRIPT_NAME}"
 BUILD_JOBS="$(nproc)"
 if [ -z "${BUILD_JOBS}" ]
 then
@@ -45,8 +46,6 @@ LINUX_MODULES_INSTALL_PATH=<PATH>: PATH to where the modules should be installed
 LINUX_HEADERS_INSTALL_PATH=<PATH>: PATH to where the headers should be installed (required if not no-install-headers)
 EOF
 }
-
-set -x
 
 PULL_REPO=1
 CLEAN_BUILD=1
@@ -201,6 +200,7 @@ fi
 
 if [ "${CLEAN_REPOS}" -eq 1 ]
 then
+    echo "Cleaning Linux repo..."
     rm -rf "${LINUX_PATH}"
 fi
 
@@ -208,11 +208,13 @@ if [ "${PULL_REPO}" -eq 1 ]
 then
     if [ ! -d "${LINUX_PATH}" ]
     then
+        echo "Repo doesn't exist, cloning..."
         git clone "${LINUX_URL}" "${LINUX_PATH}"
     fi
 
     OLD_PWD="${PWD}"
     cd "${LINUX_PATH}"
+    echo "Updating Linux repo..."
     git stash
     git checkout "${LINUX_BRANCH}"
     git pull --rebase
@@ -222,6 +224,7 @@ fi
 
 if [ "${CLEAN_BUILD}" -eq 1 ] && [ "${CLEAN_REPOS}" -eq 0 ]
 then
+    echo "Cleaning Linux build..."
     OLD_PWD="${PWD}"
     cd "${LINUX_PATH}"
     rm -f "${CONFIG_PATH}"
@@ -231,13 +234,16 @@ fi
 
 if [ "${DO_WORK}" -eq 0 ]
 then
+    echo "Done"
     exit
 fi
 
 if [ "${BUILD_LINUX}" -eq 1 ]
 then
+    echo "Configuring Linux..."
     "${LINUX_CONFIG_SCRIPT}" ${EXTRA_ARGS} LINUX_PATH="${LINUX_PATH}"
 
+    echo "Building Linux..."
     OLD_PWD="${PWD}"
     cd "${LINUX_PATH}"
     make -j"${BUILD_JOBS}"
@@ -246,6 +252,7 @@ fi
 
 if [ "${INSTALL_HEADERS}" -eq 1 ]
 then
+    echo "Installing Linux kernel headers..."
     OLD_PWD="${PWD}"
     cd "${LINUX_PATH}"
     rm -rf "${LINUX_HEADERS_INSTALL_PATH}"
@@ -256,6 +263,7 @@ fi
 
 if [ "${INSTALL_MODULES}" -eq 1 ]
 then
+    echo "Installing Linux kernel modules..."
     OLD_PWD="${PWD}"
     cd "${LINUX_PATH}"
     make modules_install INSTALL_MOD_PATH="${LINUX_MODULES_INSTALL_PATH}"
@@ -264,10 +272,12 @@ fi
 
 if [ "${INSTALL_KERNEL}" -eq 1 ]
 then
+    echo "Installing Linux kernel..."
     OLD_PWD="${PWD}"
     cd "${LINUX_PATH}"
     make install INSTALL_PATH="${LINUX_INSTALL_PATH}"
     cd "${LINUX_INSTALL_PATH}"
-    mv vmlinuz* vmlinuz
+    rm -f *.old && rm -f vmlinuz && mv vmlinuz* vmlinuz
     cd "${OLD_PWD}"
 fi
+echo "Done"

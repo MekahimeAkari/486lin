@@ -3,9 +3,10 @@
 set -e
 
 SCRIPT_DIR="$(realpath "$(dirname "$0")")"
+SCRIPTS_DIR="$(realpath "${SCRIPT_DIR}"/../)"
 COMMON_FUNCS_NAME="common_funcs.sh"
 
-. "${SCRIPT_DIR}/${COMMON_FUNCS_NAME}"
+ . "${SCRIPTS_DIR}/${COMMON_FUNCS_NAME}"
 
 BUSYBOX_CC_LINE="gcc"
 BUSYBOX_CONFIG_NAME=".config"
@@ -26,8 +27,6 @@ BUSYBOX_PATH=<PATH>: PATH to the Busybox source repo (required)
 BUSYBOX_CC_LINE=<LINE>: PATH to complier to use for Busybox (default '${BUSYBOX_CC_LINE}')
 EOF
 }
-
-set -x
 
 CLEAN_BUILD=1
 CONFIGURE_BUSYBOX=1
@@ -91,6 +90,7 @@ BUSYBOX_CONFIG_PATH="${BUSYBOX_PATH}/${BUSYBOX_CONFIG_NAME}"
 
 if [ "${CLEAN_BUILD}" -eq 1 ]
 then
+    echo "Cleaning Busybox (root) build..."
     OLD_PWD="${PWD}"
     cd "${BUSYBOX_PATH}"
     rm -f "${BUSYBOX_CONFIG_PATH}"
@@ -100,12 +100,16 @@ fi
 
 if [ "${CONFIGURE_BUSYBOX}" -eq 1 ]
 then
+    echo "Configuring Busybox for root..."
     OLD_PWD="${PWD}"
     cd "${BUSYBOX_PATH}"
     make defconfig HOSTCC="${BUSYBOX_CC_LINE}" CC="${BUSYBOX_CC_LINE}"
-    sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/' "${BUSYBOX_CONFIG_PATH}"
-    sed -i 's/# CONFIG_INSTALL_NO_USR is not set/CONFIG_INSTALL_NO_USR=y/' "${BUSYBOX_CONFIG_PATH}"
+    set_kbuild_config_val "${BUSYBOX_CONFIG_PATH}" "STATIC" "y"
+    set_kbuild_config_val "${BUSYBOX_CONFIG_PATH}" "STATIC_LIBGCC" "y"
+    set_kbuild_config_val "${BUSYBOX_CONFIG_PATH}" "INSTALL_NO_USR" "y"
     make oldconfig HOSTCC="${BUSYBOX_CC_LINE}" CC="${BUSYBOX_CC_LINE}"
     cd "${OLD_PWD}"
 fi
+
+echo "Done"
 

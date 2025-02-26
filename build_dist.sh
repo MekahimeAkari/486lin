@@ -3,16 +3,17 @@
 set -e
 
 SCRIPT_DIR="$(realpath "$(dirname "$0")")"
+SCRIPTS_DIR="${SCRIPT_DIR}/scripts"
 COMMON_FUNCS_NAME="common_funcs.sh"
 
-. "${SCRIPT_DIR}/${COMMON_FUNCS_NAME}"
+. "${SCRIPTS_DIR}/${COMMON_FUNCS_NAME}"
 
 build_dist_help()
 {
 cat << EOF
 Distro builder for 486lin
 
-Useage: $0 [help|-h|--help] | [clean|dist-clean|dist-clean-build] | [no-linux] [no-musl] [no-busybox] [no-initrd] [no-root] [no-nuke]
+Useage: $0 [help|-h|--help] | [clean|dist-clean|dist-clean-build] | [no-linux] [no-musl] [no-busybox] [no-initrd] [no-root] [no-syslinux] [no-nuke]
 
 Arguments:
 help|-h|--help: This.
@@ -24,11 +25,12 @@ no-musl: Don't rebuild musl libc (default: do rebuild it)
 no-busybox: Don't rebuild busybox (default: do rebuild it)
 no-initrd: Don't create initrd (default: do create it)
 no-root: Don't create root (default: do create it)
+no-squash: Don't create squash files (default: do create it)
+no-iso: Don't create iso (default: do create it)
+no-syslinux: Don't get syslinux (default: do get it)
 no-nuke: Don't nuke the build directory (default: do nuke it)
 EOF
 }
-
-set -x
 
 DIST_REPOS="repos"
 DIST_BUILD="build"
@@ -51,16 +53,18 @@ DIST_SQUASHFS="$(realpath -m "${DIST_DISK}/${DIST_SQUASHFS_NAME}")"
 SKEL_DIR="skel"
 INITRD_SKEL_DIR="initrd"
 ROOT_SKEL_DIR="root"
-SKEL_PATH="${SCRIPT_DIR}/skel"
+DISK_SKEL_DIR="disk"
+SKEL_PATH="${REPO_DIR}/skel"
 INITRD_SKEL_PATH="${SKEL_PATH}/${INITRD_SKEL_DIR}"
 ROOT_SKEL_PATH="${SKEL_PATH}/${ROOT_SKEL_DIR}"
+DISK_SKEL_PATH="${SKEL_PATH}/${DISK_SKEL_DIR}"
 
 LINUX_DIR="linux"
 LINUX_HEADERS_INSTALL_DIR="${LINUX_DIR}/install"
 LINUX_PATH="$(realpath -m "${DIST_REPOS}/${LINUX_DIR}")"
 LINUX_HEADERS_INSTALL_PATH="$(realpath -m "${DIST_REPOS}/${LINUX_HEADERS_INSTALL_DIR}")"
 LINUX_BUILD_SCRIPT_NAME="build_linux.sh"
-LINUX_BUILD_SCRIPT="${SCRIPT_DIR}/${LINUX_BUILD_SCRIPT_NAME}"
+LINUX_BUILD_SCRIPT="${BUILD_DIR}/${LINUX_BUILD_SCRIPT_NAME}"
 
 MUSL_DIR="musl"
 MUSL_INSTALL_DIR="${MUSL_DIR}/install"
@@ -68,7 +72,7 @@ MUSL_PATH="$(realpath -m "${DIST_REPOS}/${MUSL_DIR}")"
 MUSL_INSTALL_PATH="$(realpath -m "${DIST_REPOS}/${MUSL_INSTALL_DIR}")"
 MUSL_BIN="$(realpath -m "${MUSL_INSTALL_PATH}/bin")"
 MUSL_BUILD_SCRIPT_NAME="build_musl.sh"
-MUSL_BUILD_SCRIPT="${SCRIPT_DIR}/${MUSL_BUILD_SCRIPT_NAME}"
+MUSL_BUILD_SCRIPT="${BUILD_DIR}/${MUSL_BUILD_SCRIPT_NAME}"
 
 BUSYBOX_CC_NAME="musl-gcc"
 BUSYBOX_CC="${MUSL_BIN}/${BUSYBOX_CC_NAME}"
@@ -80,7 +84,10 @@ BUSYBOX_INITRD_DIR="busybox_initrd"
 BUSYBOX_INITRD_PATH="$(realpath -m "${DIST_REPOS}/${BUSYBOX_INITRD_DIR}")"
 BUSYBOX_INITRD_EXE="$(realpath -m "${BUSYBOX_INITRD_DIR}/${BUSYBOX_EXE_NAME}")"
 BUSYBOX_BUILD_SCRIPT_NAME="build_busybox.sh"
-BUSYBOX_BUILD_SCRIPT="${SCRIPT_DIR}/${BUSYBOX_BUILD_SCRIPT_NAME}"
+BUSYBOX_BUILD_SCRIPT="${BUILD_DIR}/${BUSYBOX_BUILD_SCRIPT_NAME}"
+
+SYSLINUX_DIR="syslinux"
+SYSLINUX_PATH="${REPO_DIR}/${SYSLINUX_DIR}"
 
 INITRD_COMPRESSOR="xz --check=crc32"
 INITRD_NAME="initrd.xz"
@@ -88,10 +95,18 @@ INITRD_OUT_DIR="isolinux"
 INITRD_OUT_PATH="${DIST_DISK}/${INITRD_OUT_DIR}"
 INITRD_OUT="${INITRD_OUT_PATH}/${INITRD_NAME}"
 INITRD_CREATE_SCRIPT_NAME="create_initrd.sh"
-INITRD_CREATE_SCRIPT="${SCRIPT_DIR}/${INITRD_CREATE_SCRIPT_NAME}"
+INITRD_CREATE_SCRIPT="${CREATE_DIR}/${INITRD_CREATE_SCRIPT_NAME}"
 
 ROOT_CREATE_SCRIPT_NAME="create_root.sh"
-ROOT_CREATE_SCRIPT="${SCRIPT_DIR}/${ROOT_CREATE_SCRIPT_NAME}"
+ROOT_CREATE_SCRIPT="${CREATE_DIR}/${ROOT_CREATE_SCRIPT_NAME}"
+SQUASH_CREATE_SCRIPT_NAME="create_squash.sh"
+SQUASH_CREATE_SCRIPT="${CREATE_DIR}/${SQUASH_CREATE_SCRIPT_NAME}"
+ISO_CREATE_SCRIPT_NAME="create_iso.sh"
+ISO_CREATE_SCRIPT="${CREATE_DIR}/${ISO_CREATE_SCRIPT_NAME}"
+
+SYSLINUX_GET_SCRIPT_NAME="get_syslinux.sh"
+SYSLINUX_GET_SCRIPT="${GET_DIR}/${SYSLINUX_GET_SCRIPT_NAME}"
+
 
 CLEAN_BUILD=1
 CLEAN_REPOS=0
@@ -101,6 +116,9 @@ BUILD_MUSL=1
 BUILD_BUSYBOX=1
 CREATE_INITRD=1
 CREATE_ROOT=1
+CREATE_SQUASH=1
+CREATE_ISO=1
+GET_SYSLINUX=1
 EXTRA_ARGS=""
 
 while [ $# -gt 0 ]
@@ -129,6 +147,18 @@ do
             ;;
         no-root)
             CREATE_ROOT=0
+            shift
+            ;;
+        no-squash)
+            CREATE_SQUASH=0
+            shift
+            ;;
+        no-iso)
+            CREATE_ISO=0
+            shift
+            ;;
+        no-syslinux)
+            GET_SYSLINUX=0
             shift
             ;;
         clean)
@@ -165,14 +195,17 @@ done
 
 if [ "${CLEAN_BUILD}" -eq 1 ]
 then
+    echo "Cleaning build..."
     rm -rf "${DIST_BUILD}"
 fi
 if [ "${CLEAN_REPOS}" -eq 1 ]
 then
+    echo "Cleaning repos..."
     rm -rf "${DIST_REPOS}"
 fi
 if [ "${BUILD_DIST}" -eq 0 ]
 then
+    echo "Done"
     exit 0
 fi
 mkdir -p "${DIST_BUILD}"
@@ -208,6 +241,7 @@ fi
 
 if [ "${BUILD_MUSL}" -eq 1 ]
 then
+    echo "Building Musl libc..."
     "${MUSL_BUILD_SCRIPT}" \
         ${EXTRA_ARGS} \
         MUSL_PATH="${MUSL_PATH}" \
@@ -258,34 +292,32 @@ then
         || { echo "Creating root failed"; exit 1; }
 fi
 
-SYSLINUX_VER="6.03"
-export SYSLINUX_URL="https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-${SYSLINUX_VER}.tar.gz"
-export SYSLINUX_DIR="syslinux"
-
-if [ ! -d "${SYSLINUX_DIR}" ]
+if [ "${CREATE_SQUASH}" -eq 1 ]
 then
-    wget "${SYSLINUX_URL}"
-    tar xvf syslinux-${SYSLINUX_VER}.tar.gz
-    mv syslinux-${SYSLINUX_VER} syslinux
+    "${SQUASH_CREATE_SCRIPT}" \
+        ${EXTRA_ARGS} \
+        ROOT_PATH="${DIST_ROOT}" \
+        SQUASH_ROOT_OUT="${DIST_SQUASHFS}" \
+        || { echo "Creating squash failed"; exit 1; }
 fi
-OLD_PWD="${PWD}"
-mkdir -p "${DIST_DISK}/isolinux"
-cp "${SYSLINUX_DIR}/bios/core/isolinux.bin" "${DIST_DISK}/isolinux"
-cp "${SYSLINUX_DIR}/bios/com32/elflink/ldlinux/ldlinux.c32" "${DIST_DISK}/isolinux"
-cat << EOF > "${DIST_DISK}/isolinux/isolinux.cfg"
-TIMEOUT 30
-DEFAULT 486LIN
-LABEL 486LIN
-    LINUX vmlinuz
-    INITRD initrd.xz
-EOF
-rm -rf "${DIST_SQUASHFS}"
-mksquashfs "${DIST_ROOT}" "${DIST_SQUASHFS}" -comp gzip
-rm -rf "${DIST_ISO}"
-mkisofs -o "${DIST_ISO}" \
-        -b isolinux/isolinux.bin \
-        -c isolinux/boot.cat \
-        -no-emul-boot \
-        -boot-load-size 4 \
-        -boot-info-table \
-        "${DIST_DISK}"
+
+if [ "${GET_SYSLINUX}" -eq 1 ]
+then
+    "${SYSLINUX_GET_SCRIPT}" \
+        ${EXTRA_ARGS} \
+        SYSLINUX_PATH="${SYSLINUX_PATH}" \
+        || { echo "Getting Syslinux failed"; exit 1; }
+fi
+
+if [ "${CREATE_ISO}" -eq 1 ]
+then
+    "${ISO_CREATE_SCRIPT}" \
+        ${EXTRA_ARGS} \
+        DISK_PATH="${DIST_DISK}" \
+        DISK_SKEL_PATH="${DISK_SKEL_PATH}" \
+        SYSLINUX_PATH="${SYSLINUX_PATH}" \
+        ISO_OUT="${DIST_ISO}" \
+        || { echo "Creating iso failed"; exit 1; }
+fi
+
+echo "Done"

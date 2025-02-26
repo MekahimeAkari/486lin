@@ -30,6 +30,19 @@ trymount()
     try "Mounting $3..." "mount ${OARG} -t $1 $2 $3" "cannot mount $3"
 }
 
+trydir()
+{
+    try "Making dir $1" "mkdir -p $1" "couldn't make dir $1"
+}
+
+trydirs()
+{
+    for dir in $@
+    do
+        trydir "$dir"
+    done
+}
+
 trymount devtmpfs none /dev
 trymount proc none /proc
 trymount sysfs none /sys
@@ -47,7 +60,12 @@ checkedmp sr_mod
 checkedmp isofs
 echo "done"
 
-try "Making new root dirs... " "mkdir -p /mnt/zram && mkdir -p /mnt/cdrom && mkdir -p /mnt/squash && mkdir -p /mnt/newroot"
+UPPER_DIR="/mnt/upper"
+CDROM_DIR="/mnt/cdrom"
+SQUASH_DIR="/mnt/squash"
+NEWROOT_DIR="/mnt/newroot"
+
+trydirs "${UPPER_DIR}" "${CDROM_DIR}" "${SQUASH_DIR}" "${NEWROOT_DIR}"
 
 TOTAL_MEM="$(echo $(grep MemTotal /proc/meminfo) | cut -f 2 -d ' ')"
 if [ -z "${TOTAL_MEM}" ]
@@ -55,18 +73,23 @@ then
     echo "Cannot determine memory size"
     TOTAL_MEM="65536"
 fi
+UPPER_FS="tmpfs"
+UPPER_DEV="none"
+UPPER_MOUNT_OPTS="size=${TOTAL_MEM}K"
 ZRAM_SIZE="$(expr "${TOTAL_MEM}" '*' '2')K"
 ZRAM_MAX_MEM="$(expr "${TOTAL_MEM}" '-' "$(expr "${TOTAL_MEM}" '/' '20')")K"
 ZRAM_DEV="zram0"
 
 try "Setting ${ZRAM_DEV} size to ${ZRAM_SIZE}..." "echo ${ZRAM_SIZE} > /sys/block/${ZRAM_DEV}/disksize" "couldn't set ${ZRAM_DEV} size"
 try "Setting ${ZRAM_DEV} max mem to ${ZRAM_MAX_MEM}..." "echo ${ZRAM_MAX_MEM} > /sys/block/${ZRAM_DEV}/mem_limit" "couldn't size ${ZRAM_DEV} max mem"
-try "Creating fs on ${ZRAM_DEV}..." "mkfs.ext2 -b 4096 /dev/${ZRAM_DEV}" "couldn't create file system on ${ZRAM_DEV}"
-trymount ext2 "/dev/${ZRAM_DEV}" "/mnt/zram"
-try "Creating zram upper/work dirs..." "mkdir -p /mnt/zram/upper && mkdir -p /mnt/zram/work" "couldn't create upper/work dirs"
+try "Creating swap on ${ZRAM_DEV}..." "mkswap /dev/${ZRAM_DEV}" "couldn't create swap on ${ZRAM_DEV}"
+try "Mounting ${ZRAM_DEV} as swap" "swapon /dev/${ZRAM_DEV}" "couldn't mount ${ZRAM_DEV} as swap"
+trymount "${UPPER_FS}" "${UPPER_DEV}" "${UPPER_DIR}" "${UPPER_MOUNT_OPTS}"
+trydirs "${UPPER_DIR}/upper" "${UPPER_DIR}/work"
+
 CDROM="sr0"
 trymount iso9660 "/dev/${CDROM}" "/mnt/cdrom" ro
 trymount squashfs "/mnt/cdrom/root.sfs" "/mnt/squash" "ro,loop"
-trymount overlay overlay "/mnt/newroot" "ro,loop,lowerdir=/mnt/squash,upperdir=/mnt/zram/upper,workdir=/mnt/zram/work"
+trymount overlay overlay "/mnt/newroot" "lowerdir=${SQUASH_DIR},upperdir=${UPPER_DIR}/upper,workdir=${UPPER_DIR}/work"
 try "Switching root..." "exec switch_root /mnt/newroot /sbin/init" "couldn't switch root"
 

@@ -3,9 +3,11 @@
 set -e
 
 SCRIPT_DIR="$(realpath "$(dirname "$0")")"
+SCRIPTS_DIR="$(realpath "${SCRIPT_DIR}"/../)"
 COMMON_FUNCS_NAME="common_funcs.sh"
 
-. "${SCRIPT_DIR}/${COMMON_FUNCS_NAME}"
+. "${SCRIPTS_DIR}/${COMMON_FUNCS_NAME}"
+
 
 build_linux_help()
 {
@@ -20,8 +22,6 @@ clean: Clean up working directory and quit (default: Don't quit)
 LINUX_PATH=<PATH>: PATH to the Linux source repo (required)
 EOF
 }
-
-set -x
 
 CLEAN_BUILD=1
 DO_WORK=1
@@ -73,14 +73,17 @@ fi
 
 if [ "${CLEAN_BUILD}" -eq 1 ]
 then
+    echo "Cleaning Linux build..."
     rm -f "${CONFIG_PATH}"
 fi
 
 if [ "${DO_WORK}" -eq 0 ]
 then
+    echo "Done"
     exit
 fi
 
+echo "Configuring Linux kernel..."
 cd "${LINUX_PATH}"
 make tinyconfig
 
@@ -106,8 +109,8 @@ make tinyconfig
 "${CONFIG_SCRIPT}" -m CRYPTO_HMAC
 "${CONFIG_SCRIPT}" -m CRYPTO_SHA256
 "${CONFIG_SCRIPT}" -m CRYPTO_USER_API_HASH
-"${CONFIG_SCRIPT}" -e CRYPTO_LZO
-"${CONFIG_SCRIPT}" -d CRYPTO_ZSTD
+"${CONFIG_SCRIPT}" -d CRYPTO_LZO
+"${CONFIG_SCRIPT}" -m CRYPTO_ZSTD
 "${CONFIG_SCRIPT}" -e DMIID
 "${CONFIG_SCRIPT}" -e EPOLL
 "${CONFIG_SCRIPT}" -e FANOTIFY
@@ -447,15 +450,15 @@ make tinyconfig
 "${CONFIG_SCRIPT}" -e BLK_DEV
 "${CONFIG_SCRIPT}" -m BLK_DEV_FD
 "${CONFIG_SCRIPT}" -m ZRAM
-"${CONFIG_SCRIPT}" -e ZRAM_DEF_COMP_LZORLE
-"${CONFIG_SCRIPT}" --set-str ZRAM_DEF_COMP "lzo-rle"
+"${CONFIG_SCRIPT}" -e ZRAM_DEF_COMP_ZSTD
+"${CONFIG_SCRIPT}" --set-str ZRAM_DEF_COMP "zstd"
 "${CONFIG_SCRIPT}" -e ZRAM_WRITEBACK
 "${CONFIG_SCRIPT}" -m BLK_DEV_LOOP
-"${CONFIG_SCRIPT}" --set-val BLK_DEV_LOOP_MIN_COUNT 8
+"${CONFIG_SCRIPT}" --set-val BLK_DEV_LOOP_MIN_COUNT 4
 "${CONFIG_SCRIPT}" -m BLK_DEV_NBD
 "${CONFIG_SCRIPT}" -m BLK_DEV_RAM
-"${CONFIG_SCRIPT}" --set-val BLK_DEV_RAM_COUNT 8
-"${CONFIG_SCRIPT}" --set-val BLK_DEV_RAM_SIZE 8192
+"${CONFIG_SCRIPT}" --set-val BLK_DEV_RAM_COUNT 2
+"${CONFIG_SCRIPT}" --set-val BLK_DEV_RAM_SIZE 4096
 "${CONFIG_SCRIPT}" -m CDROM_PKTCDVD
 "${CONFIG_SCRIPT}" --set-val CDROM_PKTCDVD_BUFFERS 8
 "${CONFIG_SCRIPT}" -e CDROM
@@ -2219,3 +2222,5 @@ make tinyconfig
 "${CONFIG_SCRIPT}" --set-val PRINTK_SAFE_LOG_BUF_SHIFT 11
 
 make olddefconfig
+
+echo "Done"

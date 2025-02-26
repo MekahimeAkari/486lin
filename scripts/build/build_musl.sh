@@ -3,9 +3,10 @@
 set -e
 
 SCRIPT_DIR="$(realpath "$(dirname "$0")")"
+SCRIPTS_DIR="$(realpath "${SCRIPT_DIR}"/../)"
 COMMON_FUNCS_NAME="common_funcs.sh"
 
-. "${SCRIPT_DIR}/${COMMON_FUNCS_NAME}"
+. "${SCRIPTS_DIR}/${COMMON_FUNCS_NAME}"
 
 MUSL_URL="git://git.musl-libc.org/musl"
 MUSL_TAG="v1.2.5"
@@ -38,8 +39,6 @@ MUSL_PATH=<PATH>: PATH to the Musl source repo (required)
 MUSL_INSTALL_PATH=<PATH>: PATH to where Musl should be installed (required if not no-install)
 EOF
 }
-
-set -x
 
 PULL_REPO=1
 CLEAN_BUILD=1
@@ -127,8 +126,6 @@ done
 
 EXIT_HELP=0
 
-CONFIG_PATH="$(realpath -m "${LINUX_PATH}/.config")"
-
 if [ -z "${MUSL_PATH}" ]
 then
     echo "\$MUSL_PATH is required to be defined"
@@ -149,6 +146,7 @@ fi
 
 if [ "${CLEAN_REPOS}" -eq 1 ]
 then
+    echo "Cleaning Musl repo..."
     rm -rf "${MUSL_PATH}"
 fi
 
@@ -156,9 +154,11 @@ if [ "${PULL_REPO}" -eq 1 ]
 then
     if [ ! -d "${MUSL_PATH}" ]
     then
+        echo "Musl repo doesn't exist, cloning..."
         git clone "${MUSL_URL}" "${MUSL_PATH}"
     fi
 
+    echo "Updating Musl repo..."
     OLD_PWD="${PWD}"
     cd "${MUSL_PATH}"
     git stash
@@ -171,6 +171,7 @@ fi
 
 if [ "${CLEAN_BUILD}" -eq 1 ] && [ "${CLEAN_REPOS}" -eq 0 ]
 then
+    echo "Cleaning Musl build..."
     OLD_PWD="${PWD}"
     cd "${MUSL_PATH}"
     make distclean
@@ -179,6 +180,7 @@ fi
 
 if [ "${DO_WORK}" -eq 0 ]
 then
+    echo "Done"
     exit
 fi
 
@@ -187,6 +189,7 @@ then
     OLD_PWD="${PWD}"
     cd "${MUSL_PATH}"
 
+    echo "Configuring Musl..."
     ./configure \
         CFLAGS="-m32 -march=i486" \
         LDFLAGS="-m32" \
@@ -195,12 +198,14 @@ then
     sed -i 's/x32/i386/' config.mak
     sed -i 's/-O2/-Os/' config.mak
 
+    echo "Building Musl..."
     make -j"${BUILD_JOBS}"
     cd "${OLD_PWD}"
 fi
 
 if [ "${INSTALL_MUSL}" ]
 then
+    echo "Installing Musl..."
     OLD_PWD="${PWD}"
     cd "${MUSL_PATH}"
     rm -rf "${MUSL_INSTALL_PATH}"
@@ -208,3 +213,6 @@ then
     make install
     cd "${OLD_PWD}"
 fi
+
+echo "Done"
+
