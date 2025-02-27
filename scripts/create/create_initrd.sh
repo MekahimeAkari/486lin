@@ -160,20 +160,39 @@ then
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/binfmt_misc*
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/hfsplus
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/jbd2
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/ext4
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/ext*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/udf
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/nls
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/pstore
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/gpu
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/net
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/usb/serial
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/usb/storage
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/usb/misc
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/usb/cdns3
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/platform
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/hwmon
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/media
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*iscsi*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*isc*
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*raid*
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/pcmcia
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/libsas
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*sas*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*3w*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*qla*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*NCR*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*esp*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*nsp*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*aha*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/ips*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/ppa*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/imm*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/myr*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/stex*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/initio*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/hptiop*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/atp*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/wd*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/dmx*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/fdomain*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/qlogic*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/a100*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/am53*
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/snic
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/hpsa*
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/sym53c8xx_2
@@ -185,14 +204,15 @@ then
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/be2iscsi
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/smartpqi
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/aacraid
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/ipr.ko
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/ipr*
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/aic94xx
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/mpi3mr
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/pm8001
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/megaraid
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/qla4xxx
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/mpt3sas
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/aic7xxx
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/ata/*ahci*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/ata/*sata*
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/mouse*
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/rmi4
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/joydev*
@@ -231,6 +251,8 @@ then
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/ptp
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/phy
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/bus
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/usb
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/tty/serial
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/block
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/lib/lz4
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/lib/crypto
@@ -245,6 +267,23 @@ then
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*essiv*
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*aes*
     rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*simd*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*rsa*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*af_alg*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*jitter*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*drbg*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*ccm*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*algif*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*xts*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*_generic*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*md*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*gf128*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*echainiv*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*cmac*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*cbc*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*authen*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*arc4*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*aead*
+    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*ecb*
     rm -f "${INITRD_MODULES_VER_PATH}"/modules.alias.new
     rm -f "${INITRD_MODULES_VER_PATH}"/modules.dep.new
     rm -f "${INITRD_MODULES_VER_PATH}"/modules.order.new
