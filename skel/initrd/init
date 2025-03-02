@@ -47,13 +47,29 @@ trymount devtmpfs none /dev
 trymount proc none /proc
 trymount sysfs none /sys
 
+DRIVERS_DONE=""
 echo "Loading drivers..."
-for i in $(grep MODALIAS /sys/bus/*/devices/*/uevent | cut -d = -f 2 | sort | uniq)
+FIRST=1
+DID_AT_LEAST_ONE=0
+while [ "${DID_AT_LEAST_ONE}" -eq 1 ] || [ "${FIRST}" -eq 1 ]
 do
-    echo "Attemping to modprobe $i..."
-    modprobe "$i" 2>/dev/null
-    echo "Done"
+    DID_AT_LEAST_ONE=0
+    if [ "${FIRST}" -eq 1 ]
+    then
+        FIRST=0
+    fi
+    for i in $(grep MODALIAS /sys/bus/*/devices/*/uevent | cut -d = -f 2 | sort | uniq)
+    do
+        if ! echo "${DRIVERS_DONE}" | grep -q "$i"
+        then
+            modprobe "$i" 2> /dev/null
+            DRIVERS_DONE="${DRIVERS_DONE} $i"
+            DID_AT_LEAST_ONE=1
+        fi
+    done
+    sleep 1
 done
+sleep 5
 checkedmp loop
 checkedmp zram
 checkedmp squashfs

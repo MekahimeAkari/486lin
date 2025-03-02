@@ -8,6 +8,8 @@ COMMON_FUNCS_NAME="common_funcs.sh"
 . "${SCRIPTS_DIR}/${COMMON_FUNCS_NAME}"
 
 MODULES_DIR="lib/modules"
+GET_MODDEPS_SCRIPT_NAME="get_moddeps.sh"
+GET_MODDEPS_SCRIPT="${SCRIPTS_DIR}/get/${GET_MODDEPS_SCRIPT_NAME}"
 
 create_initrd_help()
 {
@@ -116,13 +118,128 @@ fi
 
 if [ "${CREATE_ROOT}" -eq 1 ]
 then
+    MODULE_INFO_FILES="\
+        modules.alias \
+        modules.builtin \
+        modules.builtin.modinfo \
+        modules.dep \
+        modules.devname \
+        modules.order \
+        modules.softdep \
+        modules.symbols \
+    "
+    MODULES="\
+        zram \
+        loop \
+        serdev \
+        sr_mod \
+        sparse-keymap \
+        matrix-keymap \
+        serport \
+        cdrom \
+        .*pata.* \
+        ata_piix \
+        ata_generic \
+        rtc-cmos \
+        lzo-rle \
+        msr \
+        cpuid \
+        fbdev \
+        squashfs \
+        overlay \
+        isofs \
+        nls.* \
+        mac-.* \
+        utf8data \
+        vfat \
+        exfat \
+        nfsv.* \
+        cifs.* \
+        jfs \
+        xfs \
+        ext4 \
+        serport \
+        8250.* \
+        fdomain_isa \
+        pcips2 \
+        ps2mult \
+        bochs \
+        s3fb \
+        rivafb \
+        matrox.* \
+        cirrusfb \
+        i740fb \
+        i810.* \
+        tridentfb \
+        uvesafb \
+        af_packet.* \
+        unix.* \
+        ipv6 \
+        ac97.* \
+        snd-sb.* \
+        .*cpufreq.* \
+        acpi/.* \
+        platform/x86/.* \
+        net/ethernet/.* \
+    "
     echo "Creating root directories..."
     OLD_PWD="${PWD}"
     cd "${ROOT_PATH}"
     cp -a "${ROOT_SKEL_PATH}"/* "${ROOT_PATH}"
-    cp -a "${LINUX_MODULES_INSTALL_PATH}"/* "${ROOT_PATH}"
-    KERNEL_VER="$(ls "${ROOT_MODULES_PATH}")"
+    KERNEL_MODULES_ROOT="${LINUX_MODULES_INSTALL_PATH}/${MODULES_DIR}"
+    KERNEL_VER="$(ls "${KERNEL_MODULES_ROOT}")"
+    KERNEL_MODULES_VER_PATH="${KERNEL_MODULES_ROOT}/${KERNEL_VER}"
     ROOT_MODULES_VER_PATH="${ROOT_MODULES_PATH}/${KERNEL_VER}"
+    rm -rf "${ROOT_MODULES_VER_PATH}"
+    mkdir -p "${ROOT_MODULES_VER_PATH}"
+    for MODULE_INFO_FILE in ${MODULE_INFO_FILES}
+    do
+        cp "${KERNEL_MODULES_VER_PATH}/${MODULE_INFO_FILE}" "${ROOT_MODULES_VER_PATH}"
+    done
+
+    # Not sure the best way to propagate error failure here
+    MODULES_NEEDED="$("${GET_MODDEPS_SCRIPT}" "${MODULES}" "LINUX_MODULES_INSTALL_PATH=${LINUX_MODULES_INSTALL_PATH}")"
+    for MODULE_NEEDED in ${MODULES_NEEDED}
+    do
+        mkdir -p "${ROOT_MODULES_VER_PATH}/$(dirname "${MODULE_NEEDED}")"
+        cp "${KERNEL_MODULES_VER_PATH}/${MODULE_NEEDED}" "${ROOT_MODULES_VER_PATH}/${MODULE_NEEDED}"
+    done
+
+    rm -f "${ROOT_MODULES_VER_PATH}"/modules.alias.new
+    rm -f "${ROOT_MODULES_VER_PATH}"/modules.dep.new
+    rm -f "${ROOT_MODULES_VER_PATH}"/modules.order.new
+
+    for i in $(grep -v "^#" "${ROOT_MODULES_VER_PATH}/modules.alias" | cut -d ' ' -f 3- | sort | uniq)
+    do
+        if [ -n "$(find . -name "$i.ko")" ]
+        then
+            grep " $i" "${ROOT_MODULES_VER_PATH}/modules.alias" >> "${ROOT_MODULES_VER_PATH}/modules.alias.new"
+        fi
+    done
+
+    mv "${ROOT_MODULES_VER_PATH}/modules.alias.new" "${ROOT_MODULES_VER_PATH}/modules.alias"
+
+    for i in $(cat "${ROOT_MODULES_VER_PATH}/modules.dep" | cut -d ':' -f 1)
+    do
+        if [ -f "${ROOT_MODULES_VER_PATH}/$i" ]
+        then
+            grep "$i:" "${ROOT_MODULES_VER_PATH}/modules.dep" >> "${ROOT_MODULES_VER_PATH}/modules.dep.new"
+        fi
+    done
+
+    mv "${ROOT_MODULES_VER_PATH}/modules.dep.new" "${ROOT_MODULES_VER_PATH}/modules.dep"
+
+    for i in $(cat "${ROOT_MODULES_VER_PATH}/modules.order")
+    do
+        if [ -f "${ROOT_MODULES_VER_PATH}/$i" ]
+        then
+            grep "$i" "${ROOT_MODULES_VER_PATH}/modules.order" >> "${ROOT_MODULES_VER_PATH}/modules.order.new"
+        fi
+    done
+
+    mv "${ROOT_MODULES_VER_PATH}/modules.order.new" "${ROOT_MODULES_VER_PATH}/modules.order"
+
+
     cd "${OLD_PWD}"
 fi
 
