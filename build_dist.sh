@@ -32,8 +32,11 @@ no-nuke: Don't nuke the build directory (default: do nuke it)
 EOF
 }
 
+REPO_DIR="$(realpath "$(dirname "$0")")"
+
 DIST_REPOS="repos"
 DIST_BUILD="build"
+DIST_CONFIGS_DIR="configs"
 DIST_ROOT_DIR="root"
 DIST_INITRD_DIR="initrd"
 DIST_MODULES_DIR="modules"
@@ -43,6 +46,7 @@ DIST_DISK_DIR="disk"
 DIST_ISOLINUX_DIR="isolinux"
 
 DIST_ROOT="$(realpath -m "${DIST_BUILD}/${DIST_ROOT_DIR}")"
+DIST_CONFIGS="$(realpath -m "${REPO_DIR}/${DIST_CONFIGS_DIR}")"
 DIST_INITRD="$(realpath -m "${DIST_BUILD}/${DIST_INITRD_DIR}")"
 DIST_DISK="$(realpath -m "${DIST_BUILD}/${DIST_DISK_DIR}")"
 DIST_MODULES="$(realpath -m "${DIST_BUILD}/${DIST_MODULES_DIR}")"
@@ -60,6 +64,8 @@ ROOT_SKEL_PATH="${SKEL_PATH}/${ROOT_SKEL_DIR}"
 DISK_SKEL_PATH="${SKEL_PATH}/${DISK_SKEL_DIR}"
 
 LINUX_DIR="linux"
+LINUX_CONFIG_NAME="linux.config"
+LINUX_CONFIG="${DIST_CONFIGS}/${LINUX_CONFIG_NAME}"
 LINUX_HEADERS_INSTALL_DIR="${LINUX_DIR}/install"
 LINUX_PATH="$(realpath -m "${DIST_REPOS}/${LINUX_DIR}")"
 LINUX_HEADERS_INSTALL_PATH="$(realpath -m "${DIST_REPOS}/${LINUX_HEADERS_INSTALL_DIR}")"
@@ -78,11 +84,15 @@ BUSYBOX_CC_NAME="musl-gcc"
 BUSYBOX_CC="${MUSL_BIN}/${BUSYBOX_CC_NAME}"
 BUSYBOX_EXE_NAME="busybox"
 BUSYBOX_ROOT_DIR="busybox_root"
+BUSYBOX_ROOT_CONFIG_NAME="busybox_root.config"
 BUSYBOX_ROOT_PATH="$(realpath -m "${DIST_REPOS}/${BUSYBOX_ROOT_DIR}")"
 BUSYBOX_ROOT_EXE="$(realpath -m "${BUSYBOX_ROOT_DIR}/${BUSYBOX_EXE_NAME}")"
+BUSYBOX_ROOT_CONFIG="${DIST_CONFIGS}/${BUSYBOX_ROOT_CONFIG_NAME}"
 BUSYBOX_INITRD_DIR="busybox_initrd"
+BUSYBOX_INITRD_CONFIG_NAME="busybox_initrd.config"
 BUSYBOX_INITRD_PATH="$(realpath -m "${DIST_REPOS}/${BUSYBOX_INITRD_DIR}")"
 BUSYBOX_INITRD_EXE="$(realpath -m "${BUSYBOX_INITRD_DIR}/${BUSYBOX_EXE_NAME}")"
+BUSYBOX_INITRD_CONFIG="${DIST_CONFIGS}/${BUSYBOX_INITRD_CONFIG_NAME}"
 BUSYBOX_BUILD_SCRIPT_NAME="build_busybox.sh"
 BUSYBOX_BUILD_SCRIPT="${BUILD_DIR}/${BUSYBOX_BUILD_SCRIPT_NAME}"
 
@@ -234,6 +244,7 @@ if [ "${BUILD_LINUX}" -eq 1 ]
 then
     "${LINUX_BUILD_SCRIPT}" \
         ${EXTRA_ARGS} \
+        CONFIG="${LINUX_CONFIG}" \
         LINUX_PATH="${LINUX_PATH}" \
         LINUX_INSTALL_PATH="${DIST_DISK_ISOLINUX}" \
         LINUX_MODULES_INSTALL_PATH="${DIST_MODULES}" \
@@ -258,7 +269,7 @@ then
         BUSYBOX_PATH="${BUSYBOX_ROOT_PATH}" \
         BUSYBOX_CC="${BUSYBOX_CC}" \
         BUSYBOX_INSTALL_PATH="${DIST_ROOT}" \
-        BUSYBOX_CONFIG="root" \
+        CONFIG="${BUSYBOX_ROOT_CONFIG}" \
         LINUX_HEADERS_INSTALL_PATH="${LINUX_HEADERS_INSTALL_PATH}" \
         || { echo "Building Busybox for root failed"; exit 1; }
 
@@ -267,7 +278,7 @@ then
         BUSYBOX_CC="${BUSYBOX_CC}" \
         BUSYBOX_PATH="${BUSYBOX_INITRD_PATH}" \
         BUSYBOX_INSTALL_PATH="${DIST_INITRD}" \
-        BUSYBOX_CONFIG="initrd" \
+        CONFIG="${BUSYBOX_INITRD_CONFIG}" \
         LINUX_HEADERS_INSTALL_PATH="${LINUX_HEADERS_INSTALL_PATH}" \
         || { echo "Building Busybox for initrd failed"; exit 1; }
 fi

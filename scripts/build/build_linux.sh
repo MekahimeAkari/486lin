@@ -10,8 +10,6 @@ COMMON_FUNCS_NAME="common_funcs.sh"
 
 LINUX_URL="git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
 LINUX_BRANCH="linux-6.1.y"
-LINUX_CONFIG_SCRIPT_NAME="config_linux.sh"
-LINUX_CONFIG_SCRIPT="${CONFIG_DIR}/${LINUX_CONFIG_SCRIPT_NAME}"
 BUILD_JOBS="$(nproc)"
 if [ -z "${BUILD_JOBS}" ]
 then
@@ -25,7 +23,7 @@ Linux kernel builder for 486lin
 Linux git repo: '${LINUX_URL}'
 Linux branch: '${LINUX_BRANCH}'
 
-Useage: $0 [help|-h|--help] | [clean|dist-clean|dist-clean-build] | [no-nuke] [no-pull] [no-build] [no-install] [no-install-{kernel,modules,headers}] [-j] [LINUX_PATH=<PATH>] [LINUX_INSTALL_PATH=<PATH>] [LINUX_MODULES_INSTALL_PATH=<PATH>] [LINUX_HEADERS_INSTALL_PATH=<PATH>]
+Useage: $0 [help|-h|--help] | [clean|dist-clean|dist-clean-build] | [no-nuke] [no-pull] [no-build] [no-install] [no-install-{kernel,modules,headers}] [-j] [LINUX_PATH=<PATH>] [LINUX_INSTALL_PATH=<PATH>] [LINUX_MODULES_INSTALL_PATH=<PATH>] [LINUX_HEADERS_INSTALL_PATH=<PATH>] [CONFIG=<PATH>]
 
 Arguments:
 clean: Clean up working directory and quit (default: Don't quit)
@@ -40,6 +38,7 @@ no-install-headers: Don't install headers (default: install)
 no-install: Don't install anything (=no-install-*), just build if no-build isn't used (default: install)
 -j: Parallel build jobs (default: '${BUILD_JOBS}')
 
+CONFIG=<PATH>: PATH to kernel config file
 LINUX_PATH=<PATH>: PATH to the Linux source repo (required)
 LINUX_INSTALL_PATH=<PATH>: PATH to where the kernel should be installed (required if not no-install-kernel)
 LINUX_MODULES_INSTALL_PATH=<PATH>: PATH to where the modules should be installed (required if not no-install-modules)
@@ -120,6 +119,10 @@ do
             EXTRA_ARGS="${EXTRA_ARGS} $1"
             shift
             ;;
+        CONFIG=*)
+            CONFIG="$(get_var_val "$1")"
+            shift
+            ;;
         LINUX_PATH=*)
             LINUX_PATH="$(get_var_val "$1")"
             shift
@@ -157,7 +160,7 @@ do
             exit
             ;;
         *)
-            echo "Unknown arg \'$1\'"
+            echo "Unknown arg '$1'"
             build_linux_help
             exit 1
             ;;
@@ -166,11 +169,17 @@ done
 
 EXIT_HELP=0
 
-CONFIG_PATH="$(realpath -m "${LINUX_PATH}/.config")"
+LINUX_CONFIG_PATH="$(realpath -m "${LINUX_PATH}/.config")"
 
 if [ -z "${LINUX_PATH}" ]
 then
     echo "\$LINUX_PATH is required to be defined"
+    EXIT_HELP=1
+fi
+
+if [ -z "${CONFIG}" ]
+then
+    echo "\$CONFIG is required to be defined"
     EXIT_HELP=1
 fi
 
@@ -227,7 +236,7 @@ then
     echo "Cleaning Linux build..."
     OLD_PWD="${PWD}"
     cd "${LINUX_PATH}"
-    rm -f "${CONFIG_PATH}"
+    rm -f "${LINUX_CONFIG_PATH}"
     make mrproper
     cd "${OLD_PWD}"
 fi
@@ -240,12 +249,12 @@ fi
 
 if [ "${BUILD_LINUX}" -eq 1 ]
 then
-    echo "Configuring Linux..."
-    "${LINUX_CONFIG_SCRIPT}" ${EXTRA_ARGS} LINUX_PATH="${LINUX_PATH}"
-
-    echo "Building Linux..."
     OLD_PWD="${PWD}"
     cd "${LINUX_PATH}"
+    echo "Configuring Linux..."
+    cp "${CONFIG}" "${LINUX_CONFIG_PATH}"
+    make olddefconfig
+    echo "Building Linux..."
     make -j"${BUILD_JOBS}"
     cd "${OLD_PWD}"
 fi

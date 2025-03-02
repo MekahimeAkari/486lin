@@ -8,6 +8,8 @@ COMMON_FUNCS_NAME="common_funcs.sh"
 . "${SCRIPTS_DIR}/${COMMON_FUNCS_NAME}"
 
 MODULES_DIR="lib/modules"
+GET_MODDEPS_SCRIPT_NAME="get_moddeps.sh"
+GET_MODDEPS_SCRIPT="${SCRIPTS_DIR}/get/${GET_MODDEPS_SCRIPT_NAME}"
 
 create_initrd_help()
 {
@@ -139,151 +141,64 @@ fi
 
 if [ "${CREATE_INITRD}" -eq 1 ]
 then
+    MODULE_INFO_FILES="\
+        modules.alias \
+        modules.builtin \
+        modules.builtin.modinfo \
+        modules.dep \
+        modules.devname \
+        modules.order \
+        modules.softdep \
+        modules.symbols \
+    "
+    MODULES="\
+        font \
+        zram \
+        loop \
+        serdev \
+        sd_mod \
+        sr_mod \
+        sg \
+        sparse-keymap \
+        matrix-keymap \
+        serport \
+        cdrom \
+        .*pata.* \
+        ata_piix \
+        ata_generic \
+        regmap-i2c \
+        rtc-cmos \
+        lzo-rle \
+        msr \
+        cpuid \
+        fbdev \
+        squashfs \
+        overlay \
+        isofs \
+    "
     echo "Creating initrd..."
     OLD_PWD="${PWD}"
     cd "${INITRD_PATH}"
     cp -a "${INITRD_SKEL_PATH}"/* "${INITRD_PATH}"
-    cp -a "${LINUX_MODULES_INSTALL_PATH}"/* "${INITRD_PATH}"
-    KERNEL_VER="$(ls "${INITRD_MODULES_PATH}")"
+    KERNEL_MODULES_ROOT="${LINUX_MODULES_INSTALL_PATH}/${MODULES_DIR}"
+    KERNEL_VER="$(ls "${KERNEL_MODULES_ROOT}")"
+    KERNEL_MODULES_VER_PATH="${KERNEL_MODULES_ROOT}/${KERNEL_VER}"
     INITRD_MODULES_VER_PATH="${INITRD_MODULES_PATH}/${KERNEL_VER}"
-    rm -rf "${INITRD_MODULES_VER_PATH}"/*.bin
-    rm -rf "${INITRD_MODULES_VER_PATH}"/modules.symbols
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/net
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/sound
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/nfs*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/ntfs*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/exfat
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/smb*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/lockd
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/fuse
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/autofs
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/binfmt_misc*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/hfsplus
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/jbd2
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/ext*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/udf
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/nls
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/fs/pstore
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/gpu
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/net
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/platform
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/hwmon
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/media
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*isc*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*raid*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/pcmcia
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*sas*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*3w*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*qla*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*NCR*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*esp*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*nsp*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/*aha*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/ips*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/ppa*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/imm*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/myr*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/stex*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/initio*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/hptiop*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/atp*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/wd*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/dmx*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/fdomain*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/qlogic*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/a100*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/am53*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/snic
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/hpsa*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/sym53c8xx_2
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/esas2r
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/BusLogic*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/advansys*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/mvsas
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/arcmsr
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/be2iscsi
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/smartpqi
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/aacraid
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/ipr*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/aic94xx
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/mpi3mr
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/pm8001
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/megaraid
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/mpt3sas
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/scsi/aic7xxx
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/ata/*ahci*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/ata/*sata*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/mouse*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/rmi4
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/joydev*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/evdev*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/input-leds*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/misc
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/gameport
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/input/ff-memless*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/block/pktcdvd*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/video
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/i2c
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/leds
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/crypto
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/pinctrl
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/mfd
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/firewire
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/char
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/acpi/dptf
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/acpi/button*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/acpi/battery*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/acpi/acpi_pad*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/acpi/sbs*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/acpi/video*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/hid
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/pcmcia
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/block/nbd*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/parport
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/ssb
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/spmi
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/pps
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/connector
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/gpio
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/misc
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/uio
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/power
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/ptp
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/phy
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/bus
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/usb
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/drivers/tty/serial
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/block
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/lib/lz4
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/lib/crypto
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*blake2b*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*sha1*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*sha256*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*sha512*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*ecc*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*gcm*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*cipher*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*hash*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*essiv*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*aes*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*simd*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*rsa*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*af_alg*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*jitter*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*drbg*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*ccm*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*algif*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*xts*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*_generic*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*md*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*gf128*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*echainiv*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*cmac*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*cbc*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*authen*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*arc4*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*aead*
-    rm -rf "${INITRD_MODULES_VER_PATH}"/kernel/crypto/*ecb*
+    rm -rf "${INITRD_MODULES_VER_PATH}"
+    mkdir -p "${INITRD_MODULES_VER_PATH}"
+    for MODULE_INFO_FILE in ${MODULE_INFO_FILES}
+    do
+        cp "${KERNEL_MODULES_VER_PATH}/${MODULE_INFO_FILE}" "${INITRD_MODULES_VER_PATH}"
+    done
+
+    # Not sure the best way to propagate error failure here
+    MODULES_NEEDED="$("${GET_MODDEPS_SCRIPT}" "${MODULES}" "LINUX_MODULES_INSTALL_PATH=${LINUX_MODULES_INSTALL_PATH}")"
+    for MODULE_NEEDED in ${MODULES_NEEDED}
+    do
+        mkdir -p "${INITRD_MODULES_VER_PATH}/$(dirname "${MODULE_NEEDED}")"
+        cp "${KERNEL_MODULES_VER_PATH}/${MODULE_NEEDED}" "${INITRD_MODULES_VER_PATH}/${MODULE_NEEDED}"
+    done
+
     rm -f "${INITRD_MODULES_VER_PATH}"/modules.alias.new
     rm -f "${INITRD_MODULES_VER_PATH}"/modules.dep.new
     rm -f "${INITRD_MODULES_VER_PATH}"/modules.order.new

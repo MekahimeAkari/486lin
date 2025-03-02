@@ -49,7 +49,10 @@ trymount sysfs none /sys
 
 echo "Loading drivers..."
 for i in $(grep MODALIAS /sys/bus/*/devices/*/uevent | cut -d = -f 2 | sort | uniq)
-    do modprobe "$i" 2>/dev/null
+do
+    echo "Attemping to modprobe $i..."
+    modprobe "$i" 2>/dev/null
+    echo "Done"
 done
 checkedmp loop
 checkedmp zram
@@ -91,5 +94,7 @@ CDROM="sr0"
 trymount iso9660 "/dev/${CDROM}" "/mnt/cdrom" ro
 trymount squashfs "/mnt/cdrom/root.sfs" "/mnt/squash" "ro,loop"
 trymount overlay overlay "/mnt/newroot" "lowerdir=${SQUASH_DIR},upperdir=${UPPER_DIR}/upper,workdir=${UPPER_DIR}/work"
+umount /proc
+umount /sys
 try "Switching root..." "exec switch_root /mnt/newroot /sbin/init" "couldn't switch root"
 

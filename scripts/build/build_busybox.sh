@@ -29,7 +29,7 @@ Busybox builder for 486lin
 Busybox git repo: '${BUSYBOX_URL}'
 Busybox branch: '${BUSYBOX_BRANCH}'
 
-Useage: $0 [help|-h|--help] | [clean|dist-clean|dist-clean-build] | [no-nuke] [no-pull] [no-build] [no-install] [-j] [BUSYBOX_PATH=<PATH>] [BUSYBOX_INSTALL_PATH=<PATH>] [BUSYBOX_CC=<PATH>] [BUSYBOX_CONFIG=<CONFIG>] [LINUX_HEADERS_INSTALL_PATH=<PATH>]
+Useage: $0 [help|-h|--help] | [clean|dist-clean|dist-clean-build] | [no-nuke] [no-pull] [no-build] [no-install] [-j] [BUSYBOX_PATH=<PATH>] [BUSYBOX_INSTALL_PATH=<PATH>] [BUSYBOX_CC=<PATH>] [BUSYBOX_CONFIG=<CONFIG>] [LINUX_HEADERS_INSTALL_PATH=<PATH>] [CONFIG=<PATH>]
 
 Arguments:
 clean: Clean up working directory and quit (default: Don't quit)
@@ -41,14 +41,13 @@ no-build: Don't build anything, just install existing items if no-install isn't 
 no-install: Don't install anything, just build if no-build isn't used (default: install)
 -j: Parallel build jobs (default: '${BUILD_JOBS}')
 
+CONFIG=<PATH>: PATH to Busybox config
 BUSYBOX_PATH=<PATH>: PATH to the Busybox source repo (required)
 BUSYBOX_CC=<PATH>: PATH to complier to use for Busybox (default '${BUSYBOX_CC}')
-BUSYBOX_CONFIG=<CONFIG>: CONFIG to build Busybox, will call busybox_CONFIG_config.sh (required if not no-build, configs expected to exist are '${BUSYBOX_EXPECTED_CONFIGS}')
 BUSYBOX_INSTALL_PATH=<PATH>: PATH to where the Busybox executable should be installed (required if not no-install)
 EOF
 }
 
-BUSYBOX_CONFIG=
 PULL_REPO=1
 CLEAN_BUILD=1
 CLEAN_REPOS=0
@@ -97,6 +96,10 @@ do
             CLEAN_BUILD=1
             shift
             ;;
+        CONFIG=*)
+            CONFIG="$(get_var_val "$1")"
+            shift
+            ;;
         BUSYBOX_PATH=*)
             BUSYBOX_PATH="$(get_var_val "$1")"
             shift
@@ -107,11 +110,6 @@ do
             ;;
         BUSYBOX_CC=*)
             BUSYBOX_CC="$(get_var_val "$1")"
-            shift
-            ;;
-        BUSYBOX_CONFIG=*)
-            BUSYBOX_CONFIG="$(get_var_val "$1")"
-            BUSYBOX_CONFIG_SCRIPT="${CONFIG_DIR}/config_busybox_${BUSYBOX_CONFIG}.sh"
             shift
             ;;
         LINUX_HEADERS_INSTALL_PATH=*)
@@ -154,6 +152,12 @@ then
     EXIT_HELP=1
 fi
 
+if [ -z "${CONFIG}" ]
+then
+    echo "\$CONFIG is required to be defined"
+    EXIT_HELP=1
+fi
+
 if [ "${INSTALL_BUSYBOX}" -eq 1 ] && [ -z "${BUSYBOX_INSTALL_PATH}" ]
 then
     echo "Busybox install requested: \$BUSYBOX_INSTALL_PATH is required to be defined"
@@ -162,27 +166,11 @@ fi
 
 if [ "${BUILD_BUSYBOX}" -eq 1 ]
 then
-    if [ -z "${BUSYBOX_CONFIG}" ]
-    then
-        echo "Busybox build requested: \$BUSYBOX_CONFIG is required to be defined"
-        EXIT_HELP=1
-    fi
     if [ -z "${LINUX_HEADERS_INSTALL_PATH}" ]
     then
         echo "Busybox build requested: \$LINUX_HEADERS_INSTALL_PATH is required to be defined"
         EXIT_HELP=1
     fi
-    if [ -z "${BUSYBOX_CONFIG}" ]
-    then
-        echo "Busybox build requested: \$BUSYBOX_CONFIG is required to be defined"
-        EXIT_HELP=1
-    fi
-fi
-
-if [ -n "${BUSYBOX_CONFIG}" ] && [ ! -f "${BUSYBOX_CONFIG_SCRIPT}" ]
-then
-    echo "Config script \'${BUSYBOX_CONFIG_SCRIPT}\' for \$BUSYBOX_CONFIG=${BUSYBOX_CONFIG} cannot be found"
-    EXIT_HELP=1
 fi
 
 if [ "${EXIT_HELP}" -eq 1 ]
@@ -243,12 +231,11 @@ fi
 
 if [ "${BUILD_BUSYBOX}" -eq 1 ]
 then
-    echo "Configuring Busybox..."
-    "${BUSYBOX_CONFIG_SCRIPT}" \
-        BUSYBOX_PATH="${BUSYBOX_PATH}" \
-        BUSYBOX_CC_LINE="${BUSYBOX_CC_LINE}"
     OLD_PWD="${PWD}"
     cd "${BUSYBOX_PATH}"
+    echo "Configuring Busybox..."
+    cp "${CONFIG}" "${BUSYBOX_CONFIG_PATH}"
+    make oldconfig
     echo "Building Busybox..."
     make -j"${BUILD_JOBS}" \
         HOSTCC="${BUSYBOX_CC_LINE}" \
