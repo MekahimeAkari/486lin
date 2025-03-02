@@ -152,13 +152,10 @@ then
         modules.symbols \
     "
     MODULES="\
-        font \
         zram \
         loop \
         serdev \
-        sd_mod \
         sr_mod \
-        sg \
         sparse-keymap \
         matrix-keymap \
         serport \
@@ -166,7 +163,6 @@ then
         .*pata.* \
         ata_piix \
         ata_generic \
-        regmap-i2c \
         rtc-cmos \
         lzo-rle \
         msr \

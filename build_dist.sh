@@ -228,17 +228,27 @@ mkdir -p "${DIST_DISK}"
 mkdir -p "${DIST_MODULES}"
 mkdir -p "${DIST_DISK_ISOLINUX}"
 
-COMMON_DIRS="bin boot dev etc lib mnt proc root run sbin sys tmp usr var"
+COMMON_DIRS="bin boot dev etc lib mnt proc root run sys tmp var"
 ROOT_DIRS="${COMMON_DIRS} home etc/init.d"
 INITRD_DIRS="${COMMON_DIRS}"
 for dir in ${ROOT_DIRS}
 do
     mkdir -p "${DIST_ROOT}/${dir}"
 done
+OLD_PWD="${PWD}"
+cd "${DIST_ROOT}"
+rm -f sbin && ln -s bin sbin
+rm -f usr && ln -s . usr
+cd "${OLD_PWD}"
+
 for dir in ${INITRD_DIRS}
 do
     mkdir -p "${DIST_INITRD}/${dir}"
 done
+cd "${DIST_INITRD}"
+rm -f sbin && ln -s bin sbin
+rm -f usr && ln -s . usr
+cd "${OLD_PWD}"
 
 if [ "${BUILD_LINUX}" -eq 1 ]
 then

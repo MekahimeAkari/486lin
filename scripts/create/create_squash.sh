@@ -26,7 +26,7 @@ SQUASH_ROOT_OUT=<PATH>: PATH to output root squash file (required)
 EOF
 }
 
-SQUASH_COMPRESSOR="gzip"
+SQUASH_COMPRESSOR="lzo"
 SQUASH_EXTRA_ARGS="-noappend -no-recovery -all-root"
 CLEAN_BUILD=1
 CREATE_SQUASH=1
