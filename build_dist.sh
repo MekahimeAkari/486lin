@@ -13,7 +13,7 @@ build_dist_help()
 cat << EOF
 Distro builder for 486lin
 
-Useage: $0 [help|-h|--help] | [clean|dist-clean|dist-clean-build] | [no-linux] [no-musl] [no-busybox] [no-initrd] [no-root] [no-syslinux] [no-nuke]
+Useage: $0 [help|-h|--help] | [clean|dist-clean|dist-clean-build] | [no-linux|no-linux-build] [no-musl] [no-busybox] [no-initrd] [no-root] [no-syslinux] [no-nuke]
 
 Arguments:
 help|-h|--help: This.
@@ -21,6 +21,7 @@ clean: Clean up working directories and quit (default: Don't quit)
 dist-clean: Clean up working directories and downloaded artefacts and quit
 dist-clean-build: Clean up working directories and downloaded artefacts and build
 no-linux: Don't rebuild the linux kernel (default: do rebuild it)
+no-linux-build: Don't rebuild the linux kernel but do install artefacts (default: do rebuild it)
 no-musl: Don't rebuild musl libc (default: do rebuild it)
 no-busybox: Don't rebuild busybox (default: do rebuild it)
 no-initrd: Don't create initrd (default: do create it)
@@ -121,6 +122,7 @@ CLEAN_BUILD=1
 CLEAN_REPOS=0
 BUILD_DIST=1
 BUILD_LINUX=1
+JUST_INSTALL_LINUX=0
 BUILD_MUSL=1
 BUILD_BUSYBOX=1
 CREATE_INITRD=1
@@ -140,6 +142,10 @@ do
             ;;
         no-linux)
             BUILD_LINUX=0
+            shift
+            ;;
+        no-linux-build)
+            JUST_INSTALL_LINUX=1
             shift
             ;;
         no-musl)
@@ -252,8 +258,14 @@ cd "${OLD_PWD}"
 
 if [ "${BUILD_LINUX}" -eq 1 ]
 then
+    JUST_INSTALL_ARGS=""
+    if [ "${JUST_INSTALL_LINUX}" -eq 1 ]
+    then
+        JUST_INSTALL_ARGS="no-build"
+    fi
     "${LINUX_BUILD_SCRIPT}" \
         ${EXTRA_ARGS} \
+        ${JUST_INSTALL_ARGS} \
         CONFIG="${LINUX_CONFIG}" \
         LINUX_PATH="${LINUX_PATH}" \
         LINUX_INSTALL_PATH="${DIST_DISK_ISOLINUX}" \

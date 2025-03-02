@@ -69,7 +69,9 @@ MODULES_INSTALL_ROOT="${LINUX_MODULES_INSTALL_PATH}/${MODULES_INSTALL_SUBDIR}"
 KERNEL_VER="$(ls "${MODULES_INSTALL_ROOT}")"
 MODULES_DIR="${MODULES_INSTALL_ROOT}/${KERNEL_VER}"
 MODULES_DEP_FILE="modules.dep"
+MODULES_BUILTIN_FILE="modules.builtin"
 MODULES_DEP="${MODULES_DIR}/${MODULES_DEP_FILE}"
+MODULES_BUILTIN="${MODULES_DIR}/${MODULES_BUILTIN_FILE}"
 
 FOUND_DEPS=""
 
@@ -80,12 +82,20 @@ get_deps()
     then
         FIND_MOD="/${FIND_MOD}.ko"
     fi
-    MODDEP_LINES="$(grep "${FIND_MOD}:" "${MODULES_DEP}")"
+    echo -n "Looking for ${FIND_MOD}..." 1>&2
+    MODDEP_LINES="$(grep "${FIND_MOD}:" "${MODULES_DEP}" || true)"
     if [ -z "${MODDEP_LINES}" ]
     then
-        echo "No modules found with pattern '${FIND_MOD}'"
-        exit 1
+        if ! grep -q "${FIND_MOD}" "${MODULES_BUILTIN}"
+        then
+            echo " no modules found with pattern '${FIND_MOD}'" 1>&2
+            exit 1
+        else
+            echo " found built-in" 1>&2
+            return
+        fi
     fi
+    echo " found" 1>&2
     for MODDEP_LINE in ${MODDEP_LINES}
     do
         MOD="$(echo "${MODDEP_LINE}" | cut -d ':' -f 1)"

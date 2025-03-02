@@ -31,7 +31,7 @@ dist-clean: Clean up working directory and downloaded artefacts and quit
 dist-clean-build: Clean up working directory and downloaded artefacts and do something
 no-nuke: Don't nuke already built objects (default: do nuke them)
 no-pull: Don't try to pull the git repo (default: do pull)
-no-build: Don't build anything, just install existing items if no-install isn't used (default: build)
+no-build: Don't build anything, just install existing items if no-install isn't used (default: build, implies no-nuke)
 no-install-kernel: Don't install the kernel (default: install)
 no-install-modules: Don't install modules (default: install)
 no-install-headers: Don't install headers (default: install)
@@ -70,6 +70,8 @@ do
             ;;
         no-build)
             BUILD_LINUX=0
+            CLEAN_BUILD=0
+            EXTRA_ARGS="${EXTRA_ARGS} no-nuke"
             shift
             ;;
         no-install-kernel)
@@ -275,6 +277,8 @@ then
     echo "Installing Linux kernel modules..."
     OLD_PWD="${PWD}"
     cd "${LINUX_PATH}"
+    rm -rf "${LINUX_MODULES_INSTALL_PATH}"
+    mkdir -p "${LINUX_MODULES_INSTALL_PATH}"
     make modules_install INSTALL_MOD_PATH="${LINUX_MODULES_INSTALL_PATH}"
     cd "${OLD_PWD}"
 fi
@@ -284,9 +288,12 @@ then
     echo "Installing Linux kernel..."
     OLD_PWD="${PWD}"
     cd "${LINUX_PATH}"
+    rm -rf "${LINUX_INSTALL_PATH}"/*vmlinuz*
+    rm -rf "${LINUX_INSTALL_PATH}"/*System.map*
+    rm -rf "${LINUX_INSTALL_PATH}"/*config-*
     make install INSTALL_PATH="${LINUX_INSTALL_PATH}"
     cd "${LINUX_INSTALL_PATH}"
-    rm -f *.old && rm -f vmlinuz && mv vmlinuz* vmlinuz
+    mv vmlinuz* vmlinuz
     cd "${OLD_PWD}"
 fi
 echo "Done"

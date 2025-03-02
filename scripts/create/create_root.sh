@@ -129,7 +129,6 @@ then
         modules.symbols \
     "
     MODULES="\
-        zram \
         loop \
         serdev \
         sr_mod \
@@ -141,7 +140,6 @@ then
         ata_piix \
         ata_generic \
         rtc-cmos \
-        lzo-rle \
         msr \
         cpuid \
         fbdev \
@@ -192,19 +190,25 @@ then
     ROOT_MODULES_VER_PATH="${ROOT_MODULES_PATH}/${KERNEL_VER}"
     rm -rf "${ROOT_MODULES_VER_PATH}"
     mkdir -p "${ROOT_MODULES_VER_PATH}"
+    echo "Copying module info files..."
     for MODULE_INFO_FILE in ${MODULE_INFO_FILES}
     do
         cp "${KERNEL_MODULES_VER_PATH}/${MODULE_INFO_FILE}" "${ROOT_MODULES_VER_PATH}"
     done
+    echo "done"
 
-    # Not sure the best way to propagate error failure here
+    echo "Resolving module dependencies..."
     MODULES_NEEDED="$("${GET_MODDEPS_SCRIPT}" "${MODULES}" "LINUX_MODULES_INSTALL_PATH=${LINUX_MODULES_INSTALL_PATH}")"
+    echo "done"
+    echo "Copying modules..."
     for MODULE_NEEDED in ${MODULES_NEEDED}
     do
         mkdir -p "${ROOT_MODULES_VER_PATH}/$(dirname "${MODULE_NEEDED}")"
         cp "${KERNEL_MODULES_VER_PATH}/${MODULE_NEEDED}" "${ROOT_MODULES_VER_PATH}/${MODULE_NEEDED}"
     done
+    echo "done"
 
+    echo "Trimming module info files..."
     rm -f "${ROOT_MODULES_VER_PATH}"/modules.alias.new
     rm -f "${ROOT_MODULES_VER_PATH}"/modules.dep.new
     rm -f "${ROOT_MODULES_VER_PATH}"/modules.order.new
@@ -238,6 +242,7 @@ then
     done
 
     mv "${ROOT_MODULES_VER_PATH}/modules.order.new" "${ROOT_MODULES_VER_PATH}/modules.order"
+    echo "done"
 
 
     cd "${OLD_PWD}"

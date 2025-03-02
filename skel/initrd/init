@@ -71,7 +71,6 @@ do
 done
 sleep 5
 checkedmp loop
-checkedmp zram
 checkedmp squashfs
 checkedmp overlay
 checkedmp cdrom

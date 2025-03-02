@@ -152,7 +152,6 @@ then
         modules.symbols \
     "
     MODULES="\
-        zram \
         loop \
         serdev \
         sr_mod \
@@ -164,10 +163,8 @@ then
         ata_piix \
         ata_generic \
         rtc-cmos \
-        lzo-rle \
         msr \
         cpuid \
-        fbdev \
         squashfs \
         overlay \
         isofs \
@@ -182,19 +179,25 @@ then
     INITRD_MODULES_VER_PATH="${INITRD_MODULES_PATH}/${KERNEL_VER}"
     rm -rf "${INITRD_MODULES_VER_PATH}"
     mkdir -p "${INITRD_MODULES_VER_PATH}"
+    echo "Copying module info files..."
     for MODULE_INFO_FILE in ${MODULE_INFO_FILES}
     do
         cp "${KERNEL_MODULES_VER_PATH}/${MODULE_INFO_FILE}" "${INITRD_MODULES_VER_PATH}"
     done
+    echo "done"
 
-    # Not sure the best way to propagate error failure here
+    echo "Resolving module dependencies..."
     MODULES_NEEDED="$("${GET_MODDEPS_SCRIPT}" "${MODULES}" "LINUX_MODULES_INSTALL_PATH=${LINUX_MODULES_INSTALL_PATH}")"
+    echo "done"
+    echo "Copying modules..."
     for MODULE_NEEDED in ${MODULES_NEEDED}
     do
         mkdir -p "${INITRD_MODULES_VER_PATH}/$(dirname "${MODULE_NEEDED}")"
         cp "${KERNEL_MODULES_VER_PATH}/${MODULE_NEEDED}" "${INITRD_MODULES_VER_PATH}/${MODULE_NEEDED}"
     done
+    echo "done"
 
+    echo "Trimming module info files..."
     rm -f "${INITRD_MODULES_VER_PATH}"/modules.alias.new
     rm -f "${INITRD_MODULES_VER_PATH}"/modules.dep.new
     rm -f "${INITRD_MODULES_VER_PATH}"/modules.order.new
@@ -228,9 +231,12 @@ then
     done
 
     mv "${INITRD_MODULES_VER_PATH}/modules.order.new" "${INITRD_MODULES_VER_PATH}/modules.order"
+    echo "done"
 
+    echo "Generating initrd..."
     find . -print0 | cpio --null --create --verbose --format=newc | ${INITRD_COMPRESSOR} > "${INITRD_OUT}"
 
+    echo "done"
     cd "${OLD_PWD}"
 fi
 
